@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro CMS - Admin & Publik</title>
+    <style>
+        :root { --p-color: #3498db; --bg: #f4f7f6; }
+        body { margin: 0; font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
+        .container { background: white; padding: 30px; border-radius: 15px; shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 450px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        input, textarea, button { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: 1px solid #ddd; text-align: center; font-size: 15px; }
+        button { background: var(--p-color); color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.8; }
+        .btn-del { background: #e74c3c; padding: 5px; font-size: 12px; margin-top: 5px; }
+        .post-card { background: #fff; padding: 15px; margin-top: 10px; border-radius: 10px; border-left: 5px solid var(--p-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: left; position: relative; }
+        .time { font-size: 10px; color: #888; display: block; margin-bottom: 5px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="login-view">
+        <h2>CMS PRO 🚀</h2>
+        <input type="text" id="username" placeholder="Username (Bebas)">
+        <input type="password" id="password" placeholder="Password: admin1234">
+        <button onclick="login()">Masuk Dashboard</button>
+        <button style="background:#95a5a6" onclick="showPublic()">Skip Ke Publik</button>
+    </div>
+
+    <div class="container hidden" id="admin-view">
+        <h3 id="admin-title">Panel Admin</h3>
+        <textarea id="post-content" rows="3" placeholder="Tulis pengumuman baru..."></textarea>
+        <button onclick="addPost()">Update Konten</button>
+        <hr>
+        <div id="admin-posts"></div>
+        <button style="background:#e74c3c" onclick="location.reload()">Logout & Refresh</button>
+    </div>
+
+    <div class="container hidden" id="public-view">
+        <h2>Informasi Publik</h2>
+        <div id="public-posts"></div>
+        <button style="background:#95a5a6; margin-top:20px" onclick="location.reload()">Kembali</button>
+    </div>
+
+    <script>
+        // Ambil data dari penyimpanan HP (LocalStorage)
+        let db = JSON.parse(localStorage.getItem('cms_data')) || [];
+
+        function login() {
+            const user = document.getElementById('username').value;
+            if(document.getElementById('password').value === 'admin1234') {
+                document.getElementById('admin-title').innerText = "Halo, " + (user || "Admin");
+                showElement('admin-view');
+                render();
+            } else { alert("Password Salah!"); }
+        }
+
+        function showPublic() { showElement('public-view'); render(); }
+
+        function showElement(id) {
+            document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function addPost() {
+            const text = document.getElementById('post-content').value;
+            if(!text) return;
+            const now = new Date();
+            const timeStr = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+            
+            db.unshift({ id: Date.now(), msg: text, time: timeStr });
+            save();
+            document.getElementById('post-content').value = '';
+            render();
+        }
+
+        function deletePost(id) {
+            db = db.filter(item => item.id !== id);
+            save();
+            render();
+        }
+
+        function save() { localStorage.setItem('cms_data', JSON.stringify(db)); }
+
+        function render() {
+            const adminBox = document.getElementById('admin-posts');
+            const publicBox = document.getElementById('public-posts');
+            
+            let adminHtml = '';
+            let publicHtml = '';
+
+            db.forEach(item => {
+                adminHtml += `<div class="post-card">
+                    <span class="time">Pukul ${item.time}</span>
+                    ${item.msg}
+                    <button class="btn-del" onclick="deletePost(${item.id})">Hapus Postingan</button>
+                </div>`;
+                
+                publicHtml += `<div class="post-card">
+                    <span class="time">Pukul ${item.time}</span>
+                    ${item.msg}
+                </div>`;
+            });
+
+            adminBox.innerHTML = adminHtml || '<p>Belum ada postingan.</p>';
+            publicBox.innerHTML = publicHtml || '<p>Belum ada postingan.</p>';
+        }
+    </script>
+</body>
+</html>
